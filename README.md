@@ -52,7 +52,7 @@ CameraCheckResult cameraCheckResult = CameraCheckUtil.isSupportSDK(this);
 ## 2. 接入须知
 ### 2.1 SDK
 #### 2.1.1 SDK地址
-* [SDK下载](https://happycat-new.oss-cn-shanghai.aliyuncs.com/prod/sdks/physical_health_android_v1.0.4_beta.zip)
+* [SDK下载](https://happycat-new.oss-cn-shanghai.aliyuncs.com/prod/sdks/physical_health_android_v1.0.5_beta.zip)
 * [Sample演示](https://github.com/xiaoyang-tech/PhysicalHealth.Android)
 
 #### 2.1.2 目录结构
