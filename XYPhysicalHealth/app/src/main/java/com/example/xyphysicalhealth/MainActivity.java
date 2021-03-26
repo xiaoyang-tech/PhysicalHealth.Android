@@ -9,7 +9,6 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.blankj.utilcode.util.ToastUtils;
 import com.luoye.bzmedia.BZMedia;
 import com.luoye.bzmedia.BuildConfig;
 import com.tencent.mmkv.MMKV;
@@ -21,11 +20,11 @@ import org.opencv.android.OpenCVLoader;
 import java.io.File;
 import java.util.ArrayList;
 
-import cn.xymind.happycat.callback.HttpResultCallBack;
+import cn.xymind.happycat.callback.HttpResultListener;
 import cn.xymind.happycat.enums.CameraCheckResult;
 import cn.xymind.happycat.helper.ApiUtil;
 import cn.xymind.happycat.util.CameraCheckUtil;
-import cn.xymind.happycat.util.FileCopyUtil;
+import cn.xymind.happycat.util.FileUtil;
 import cn.xymind.happycat.util.PermissionUtil;
 
 public class MainActivity extends AppCompatActivity {
@@ -45,7 +44,7 @@ public class MainActivity extends AppCompatActivity {
         requestPermission();
         init();
         checkSupport();
-        apiUtil = new ApiUtil(new HttpResultCallBack() {
+        apiUtil = new ApiUtil(new HttpResultListener() {
             @Override
             public void success(int code) {
                 Log.e(TAG,"success code="+code);
@@ -106,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
     private void init(){
         MMKV.initialize(this);
         BZMedia.init(this, BuildConfig.DEBUG);
-        if (FileCopyUtil.copyFileOrDir( STUDY_PATH, getApplication())) {
+        if (FileUtil.copyFileOrDir( STUDY_PATH, getApplication())) {
             studyPath = this.getFilesDir().getAbsolutePath() + File.separator +  STUDY_PATH;
             Log.e(TAG, studyPath);
         }

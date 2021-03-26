@@ -52,7 +52,7 @@ CameraCheckResult cameraCheckResult = CameraCheckUtil.isSupportSDK(this);
 ## 2. 接入须知
 ### 2.1 SDK
 #### 2.1.1 SDK地址
-* [SDK下载](https://happycat-new.oss-cn-shanghai.aliyuncs.com/prod/sdks/physical_health_android_v1.0.5_beta.zip)
+* [SDK下载](https://happycat-new.oss-cn-shanghai.aliyuncs.com/prod/sdks/physical_health_android_v1.0.6_beta.zip)
 * [Sample演示](https://github.com/xiaoyang-tech/PhysicalHealth.Android)
 
 #### 2.1.2 目录结构
@@ -93,8 +93,8 @@ implementation fileTree(dir: 'libs', include: ['*.jar','*.aar'])
 public static String studyPath;
 public static String STUDY_PATH = "mobile20210122.dat";
 
-if (FileCopyUtil.copyFileOrDir(STUDY_PATH,getApplication())) {
-   studyPath = this.getFilesDir().getAbsolutePath() + File.separator + STUDY_PATH;
+if (FileUtil.copyFileOrDir(STUDY_PATH,getApplication())) {
+    studyPath = this.getFilesDir().getAbsolutePath() + File.separator + STUDY_PATH;
 }
 ```
 参数名|类型|含义
@@ -107,19 +107,17 @@ application |Application| 用于获取assets目录
 首先需要进行登录获得token
 
 ```java
-ApiUtil apiUtil = new ApiUtil(new HttpResultCallBack() {
-     @Override
-     public void success(int code) {
-          Log.e(TAG,"success code="+code);
-
-     }
-     @Override
-     public void error(int requestCode, int responseCode, String body) {
-          Log.e(TAG,"requestCode="+requestCode+" requestCode="+requestCode+" body="+body);
-
-     }
+ApiUtil apiUtil = new ApiUtil(new HttpResultListener() {
+    @Override
+    public void success(int code) {
+        Log.e(TAG,"success code="+code);
+    }
+    @Override
+    public void error(int requestCode, int responseCode, String body) {
+        Log.e(TAG,"requestCode="+requestCode+" requestCode="+requestCode+" body="+body);
+    }
 }, this);
-  apiUtil.userLogin(userName,password);
+apiUtil.userLogin(userName,password);
 ```
 获得token之后需要进行鉴权，检查测量服务是否可用
 
@@ -145,29 +143,29 @@ private Camera1Helper camera1Helper;
 ```
 
 进行初始化，将拷贝资源文件中的文件地址传入
-
+如果需要录制视频,将倒数第二个参数设为`true`,如不需要设为`false`,最后一个参数传`null`即可
 ```java
-camera1Helper = new Camera1Helper(studyPath,this,this,this,this);
+camera1Helper = new Camera1Helper(studyPath, this, this, this, this, true,this);
 ```
 将原始的camera1摄像头nv21格式的数据传入
 
 ```java
 if(camera1Helper!=null) {
-     camera1Helper.onPreviewDataUpdate(data,width,height,displayOrientation,cameraId);
+    camera1Helper.onPreviewDataUpdate(data,width,height,displayOrientation,cameraId,previewFormat);
 }
 ```
 在合适的时候开始测量
 
 ```java
 if (camera1Helper != null) {
-     camera1Helper.startMeasurement();
+    camera1Helper.startMeasurement();
 }
 ```
 在必要的时候结束测量
 
 ```java
 if (camera1Helper != null) {
-     camera1Helper.stopMeasurement();
+    camera1Helper.stopMeasurement();
 }
 ```
 当视频帧检测不符合要求时，会自动停止测量
@@ -234,7 +232,7 @@ public interface CollectorListener {
     void onConstraintReceived(ConstraintResult status);
 
     //生成payload
-    default void onChunkPayloadReceived(@NonNull ChunkPayload chunkPayload, @NonNull Collector collector){}
+    default void onChunkPayloadReceived(@NonNull ChunkPayload payload) {}
 
     //视频帧和耗时
     default void onFrameRateEvent(double frameRate, Long frameTimestamp){}
@@ -258,6 +256,22 @@ public interface OnCameraStateListener {
 	//摄像头关闭
     void onCameraClose();
 }
+```
+#### 2.3.6 视频录制(可设置)
+
+```java
+public interface SaveVideoListener {
+
+     //录制成功 返回最终视频路径
+     void onRecordComplete(String videoPath);
+
+     //开始录制 返回临时视频路径
+     default void onStartRecord(String tempVideoPath){}
+
+     //取消录制 返回是否删除成功
+     default void onRecordCanceled(boolean isDelete){}
+}
+
 ```
 
 ### 2.3 测量指标
