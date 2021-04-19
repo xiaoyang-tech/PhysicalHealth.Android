@@ -9,26 +9,27 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.luoye.bzcamera.BZCameraView;
 import com.luoye.bzcamera.listener.OnCameraStateListener;
 import ai.nuralogix.dfx.ConstraintResult;
+import cn.xymind.happycat.bean.FaceDetect;
 import cn.xymind.happycat.callback.CloudAnalyzerResultListener;
 import cn.xymind.happycat.callback.CollectorListener;
+import cn.xymind.happycat.callback.HttpResultListener;
 import cn.xymind.happycat.callback.MNNFaceDetectListener;
 import cn.xymind.happycat.callback.MeasureProcessListener;
-import cn.xymind.happycat.callback.SaveVideoListener;
+import cn.xymind.happycat.callback.RecordVideoListener;
 import cn.xymind.happycat.enums.MeasureState;
 import cn.xymind.happycat.enums.WebError;
-import cn.xymind.happycat.helper.Camera1Helper;
-
-import static com.example.xyphysicalhealth.MainActivity.studyPath;
-
+import cn.xymind.happycat.helper.PhysicalHealth;
 
 public class HealthMeasureActivity extends AppCompatActivity implements OnCameraStateListener,
-        MeasureProcessListener, CollectorListener, MNNFaceDetectListener, CloudAnalyzerResultListener, SaveVideoListener {
+        MeasureProcessListener, CollectorListener, MNNFaceDetectListener, CloudAnalyzerResultListener, RecordVideoListener, HttpResultListener {
 
     private String TAG= "HealthMeasureActivity";
-    private Camera1Helper camera1Helper;
+    private PhysicalHealth camera1Helper;
     private BZCameraView bzCameraView;
     private int previewFormat = ImageFormat.NV21;
-
+    private String userName ="your userName";
+    private String password ="your password";
+    private String license="your license";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,8 +46,19 @@ public class HealthMeasureActivity extends AppCompatActivity implements OnCamera
     }
 
     private void initCamera(){
-        camera1Helper = new Camera1Helper(studyPath,
-                this, this, this, this, true,this);
+        camera1Helper =  new PhysicalHealth.Builder()
+                .username(userName)
+                .password(password)
+                .license(license)
+                .studyPath(MainActivity.studyPath)
+                .recordVideo(true)//录制视频true
+                .CloudAnalyzerResultListener(this)
+                .CollectorListener(this)
+                .MNNFaceDetectListener(this)
+                .HttpResultListener(this)
+                .RecordVideoListener(this)
+                .MeasureProcessListener(this)
+                .build();
     }
 
     public void startMeasurement(View view) {
@@ -57,7 +69,7 @@ public class HealthMeasureActivity extends AppCompatActivity implements OnCamera
 
     public void stopMeasurement(View view) {
         if (camera1Helper != null) {
-            camera1Helper.stopMeasurement(null);
+            camera1Helper.interruptMeasurement();
         }
     }
 
@@ -86,12 +98,12 @@ public class HealthMeasureActivity extends AppCompatActivity implements OnCamera
     //CloudAnalyzerResultListener
 
     @Override
-    public void onResult(String s) {
+    public void onCloudAnalyzerResult(String s) {
         Log.e(TAG,s);
     }
 
     @Override
-    public void onError(WebError webError) {
+    public void onCloudAnalyzerError(WebError webError) {
         Log.e(TAG,"错误码: "+webError.getErrorCode());
     }
 
@@ -110,23 +122,28 @@ public class HealthMeasureActivity extends AppCompatActivity implements OnCamera
 
     //MeasureProcessListener
     @Override
-    public void measureStart() {
-        Log.e(TAG,"measureStart");
+    public FaceDetect onMeasureFaceDetect() {
+        Log.e(TAG,"onMeasureFaceDetect");
+        return null;
     }
-
     @Override
-    public void measureStop(MeasureState measureState) {
-        Log.e(TAG,"measureStop"+measureState);
+    public void onMeasureUpdate(String m){
+
+        Log.e(TAG,"onMeasureUpdate "+m);
+    }
+    @Override
+    public void onMeasureStop(MeasureState measureState) {
+        Log.e(TAG,"measureStop "+measureState);
     }
 
-    //SaveVideoListener
+    //RecordVideoListener
     @Override
     public void onRecordComplete(String path) {
-        Log.e(TAG,"录制成功"+path);
+        Log.e(TAG,"录制成功 "+path);
     }
 
     @Override
-    public void onStartRecord(String path) {
+    public void onRecordStart(String path) {
         Log.e(TAG,"开始录制 "+path);
     }
 
@@ -155,5 +172,15 @@ public class HealthMeasureActivity extends AppCompatActivity implements OnCamera
             camera1Helper = null;
         }
         super.onDestroy();
+    }
+
+    @Override
+    public void onHttpSuccess(int requestCode) {
+
+    }
+
+    @Override
+    public void onHttpError(int requestCode, int responseCode, String body) {
+
     }
 }

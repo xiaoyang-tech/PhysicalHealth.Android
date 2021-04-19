@@ -20,9 +20,7 @@ import org.opencv.android.OpenCVLoader;
 import java.io.File;
 import java.util.ArrayList;
 
-import cn.xymind.happycat.callback.HttpResultListener;
 import cn.xymind.happycat.enums.CameraCheckResult;
-import cn.xymind.happycat.helper.ApiUtil;
 import cn.xymind.happycat.util.CameraCheckUtil;
 import cn.xymind.happycat.util.FileUtil;
 import cn.xymind.happycat.util.PermissionUtil;
@@ -32,10 +30,6 @@ public class MainActivity extends AppCompatActivity {
     public static String STUDY_PATH = "mobile20210122.dat";
 
     private String TAG ="MainActivity";
-    private ApiUtil apiUtil;
-    private String userName ="your userName";
-    private String password ="your password";
-    private String license="your license";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,36 +38,6 @@ public class MainActivity extends AppCompatActivity {
         requestPermission();
         init();
         checkSupport();
-        apiUtil = new ApiUtil(new HttpResultListener() {
-            @Override
-            public void success(int code) {
-                Log.e(TAG,"success code="+code);
-
-                if(code ==101){
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(getApplicationContext(),"登录成功！",Toast.LENGTH_SHORT).show();
-                        }
-                    });
-
-                }
-                if(code ==102){
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(getApplicationContext(),"鉴权成功！",Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                }
-            }
-            @Override
-            public void error(int requestCode, int responseCode, String body) {
-                Log.e(TAG,"requestCode="+requestCode+" responseCode="+responseCode+" body="+body);
-
-            }
-        }, this);
-
     }
 
     /**
@@ -169,13 +133,5 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     };
-
-    public void Login(View view) {
-        apiUtil.userLogin(userName,password);
-    }
-
-    public void CheckLicense(View view) {
-        apiUtil.checkLicense(license);
-    }
 
 }

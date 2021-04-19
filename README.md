@@ -52,7 +52,6 @@ CameraCheckResult cameraCheckResult = CameraCheckUtil.isSupportSDK(this);
 ## 2. 接入须知
 ### 2.1 SDK
 #### 2.1.1 SDK地址
-* [SDK下载](https://happycat-new.oss-cn-shanghai.aliyuncs.com/prod/sdks/physical_health_android_v1.0.6_beta.zip)
 * [Sample演示](https://github.com/xiaoyang-tech/PhysicalHealth.Android)
 
 #### 2.1.2 目录结构
@@ -64,7 +63,6 @@ libs |所需aar文件
 assets |所需资源文件
 MainActivity.java |进行一些初始化工作
 HealthMeasureActivity.java |测量页面
-jniLibs |所需动态库
 
 ### 2.2 流程
 
@@ -103,26 +101,24 @@ path |String|assets目录下资源文件名称
 application |Application| 用于获取assets目录
 
 
-#### 3) 登录以及鉴权
-首先需要进行登录获得token
+#### 3) 登录、鉴权以及初始化对象
 
+创建一个`PhysicalHealth`对象,传入`userName`,`passWord`,`license`，`studyPath`进行初始化，是否录制视频以及回调可根据需要设置
 ```java
-ApiUtil apiUtil = new ApiUtil(new HttpResultListener() {
-    @Override
-    public void success(int code) {
-        Log.e(TAG,"success code="+code);
-    }
-    @Override
-    public void error(int requestCode, int responseCode, String body) {
-        Log.e(TAG,"requestCode="+requestCode+" requestCode="+requestCode+" body="+body);
-    }
-}, this);
-apiUtil.userLogin(userName,password);
-```
-获得token之后需要进行鉴权，检查测量服务是否可用
-
-```java
-apiUtil.checkLicense(license);
+private PhysicalHealth physicalHealth;
+physicalHealth =  new PhysicalHealth.Builder()
+                .username(userName)
+                .password(password)
+                .license(license)
+                .studyPath(MainActivity.studyPath)
+                .recordVideo(true)
+                .CloudAnalyzerResultListener(this)
+                .CollectorListener(this)
+                .MNNFaceDetectListener(this)
+                .HttpResultListener(this)
+                .RecordVideoListener(this)
+                .MeasureProcessListener(this)
+                .build();
 ```
 
 参数名|类型|含义
@@ -130,85 +126,93 @@ apiUtil.checkLicense(license);
 userName|String|用户名或手机号|
 passWord|String|密码|
 license|String|唯一标识|
+studyPath|String|模型文件地址
+recordVideo|boolean|是否录制视频
+
+可以设置`httpResultListener`获得登录以及鉴权的结果
+```java
+public interface HttpResultListener {
+
+    void onHttpSuccess(int code);
+
+    void onHttpError(int requestCode, int responseCode, String body);
+}
+```
+参数名|类型|含义
+:-|:-|:-
 code|int|success中返回101代表登录成功，102代表鉴权成功
 requestCode|int|返回101代表登录失败，102代表鉴权失败
 responseCode|int|http响应码
 body|String|返回对应的错误消息
 
-#### 4)  测量
-
-创建一个`Camera1Helper`对象
-```java
-private Camera1Helper camera1Helper;
-```
-
-进行初始化，将拷贝资源文件中的文件地址传入
-如果需要录制视频,将倒数第二个参数设为`true`,如不需要设为`false`,最后一个参数传`null`即可
-```java
-camera1Helper = new Camera1Helper(studyPath, this, this, this, this, true,this);
-```
+# 4)  测量
 将原始的camera1摄像头nv21格式的数据传入
-
 ```java
-if(camera1Helper!=null) {
-    camera1Helper.onPreviewDataUpdate(data,width,height,displayOrientation,cameraId,previewFormat);
+if (physicalHealth != null) {
+    physicalHealth.onPreviewDataUpdate(data,width,height,displayOrientation,cameraId,previewFormat);
 }
 ```
 在合适的时候开始测量
-
 ```java
-if (camera1Helper != null) {
-    camera1Helper.startMeasurement();
+if(physicalHealth != null) {
+    physicalHealth.startMeasurement();
 }
 ```
 在必要的时候结束测量
 
 ```java
-if (camera1Helper != null) {
-    camera1Helper.stopMeasurement();
+if (physicalHealth != null) {
+    physicalHealth.stopMeasurement();
 }
 ```
 当视频帧检测不符合要求时，会自动停止测量
 
+销毁测量对象
+```java
+if (physicalHealth != null) {
+    physicalHealth.onDestroy();
+    physicalHealth = null;
+}
+```
+
 #### 5) 结果
 
-可在`CloudAnalyzerResultListener`的`onResult`中获得云端返回结果
+可在`CloudAnalyzerResultListener`的`onCloudAnalyzerResult`中获得云端返回结果
 
 ### 2.3 功能接口
-在上述流程中，SDK公布了以下事件，开发者可以通过注册相应事假来实现流程干预控制。
+在上述流程中，SDK公布了以下事件，开发者可以通过注册相应事件来实现流程干预控制。
 
 #### 2.3.1 测量过程
 ```java
-public interface MeasureFaceListener {
+public interface MeasureProcessListener {
 
-    //开始测量
-    default void measureStart(){}
+    //测量开始之前
+    default FaceDetect onMeasureFaceDetect(){return null;}
 
-    //结束测量
-    default void measureStop(){}
+    //测量结束或者中止
+    void onMeasureStop(MeasureState measureState );
 
     //测量过程中更新数据
-    default void measureUpdate(String message){}
+    default void onMeasureUpdate(String message){}
+
 }
+ 
 ```
 #### 2.3.2 人脸检测
 ```java
 public interface MNNFaceDetectListener {
-
     //识别到人脸，可能有多个
     default void onFaceDetected(int faceNumber){}
-
     //未识别到人脸
     default void onNoFaceDetected(){}
 }
-
 ```
 #### 2.3.3 云端分析数据
 ```java
 public interface CloudAnalyzerResultListener {
 
      //测量唯一ID
-     default void measurementId(String measurementId){}
+     default void onMeasurementId(String measurementId){}
 
      //开始分析数据
      default void onStartAnalyzing() {}
@@ -217,10 +221,10 @@ public interface CloudAnalyzerResultListener {
      default void onEachFinishAnalyzing() {}
 
      //获得返回结果
-     void onResult(@NonNull String result);
+     default void onCloudAnalyzerResult(String result){}
 
      //服务端返回错误消息
-     void onError(WebError error);
+     default void onCloudAnalyzerError(WebError error){}
 }
 
 ```
@@ -232,7 +236,7 @@ public interface CollectorListener {
     void onConstraintReceived(ConstraintResult status);
 
     //生成payload
-    default void onChunkPayloadReceived(@NonNull ChunkPayload payload) {}
+    default void onChunkPayloadReceived(ChunkPayload chunkPayload,long chunkNumber){}
 
     //视频帧和耗时
     default void onFrameRateEvent(double frameRate, Long frameTimestamp){}
@@ -260,17 +264,18 @@ public interface OnCameraStateListener {
 #### 2.3.6 视频录制(可设置)
 
 ```java
-public interface SaveVideoListener {
+public interface RecordVideoListener {
 
      //录制成功 返回最终视频路径
      void onRecordComplete(String videoPath);
 
      //开始录制 返回临时视频路径
-     default void onStartRecord(String tempVideoPath){}
+     default void onRecordStart(String tempVideoPath){}
 
      //取消录制 返回是否删除成功
      default void onRecordCanceled(boolean isDelete){}
 }
+
 
 ```
 
