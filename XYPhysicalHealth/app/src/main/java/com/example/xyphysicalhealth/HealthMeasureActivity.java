@@ -112,6 +112,7 @@ public class HealthMeasureActivity extends AppCompatActivity implements OnCamera
     public void onConstraintReceived(ConstraintResult constraintStatus) {
         if(constraintStatus.status !=ConstraintResult.ConstraintStatus.Good){
             Log.e(TAG,constraintStatus.toString());
+            //对视频帧的检测,不佳要停止UI
         }
     }
     //MNNFaceDetectListener
@@ -133,6 +134,7 @@ public class HealthMeasureActivity extends AppCompatActivity implements OnCamera
     }
     @Override
     public void onMeasureStop(MeasureState measureState) {
+        //SDK停止测量 UI要停止
         Log.e(TAG,"measureStop "+measureState);
     }
 

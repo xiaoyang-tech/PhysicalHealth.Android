@@ -303,14 +303,24 @@ bP_DIASTOLIC|float|舒张压|[90,100]||[50,60)U[80,90)|[70,80)|[60,70)
 ## 3. 常见问题
 ### 3.1 FAQ
 #### Q：测量异常中断
-在`CollectorListener`接口的`onConstraintReceived`会返回客户端对视频帧检测的结果，如果视频帧符合要求则返回`Good`,如果不符合则返回`Error`,并给出错误原因,如:
-        `FACE_FAR`,人脸距离摄像头太远
-        `FACE_DIRECTION` ,超出人脸检测区域
-        `FACE_MOVEMENT` ,人脸晃动，需保持静止
-        `FACE_NONE`,没有检测到人脸
-        `IMAGE_BRIGHT`,光线过亮
-        `IMAGE_DARK`,光线过暗
-        `LOW_FPS`,帧率过低
+
+停止原因|MeasureState
+:-|:-
+摄像头数据为空|NV21NULL
+用户主动中止，不想继续测量|STOP
+测量完成|Completed
+人脸引擎没有初始化|MNNNULL
+FRAMENOTGOOD|视频帧质量不佳
+
+关于视频质量不佳的具体原因会在`CollectorListener`接口的`onConstraintReceived`会返回客户端对视频帧检测的结果，如果视频帧符合要求则返回`Good`,如果不符合则返回`Error`,并给出错误原因,如:
+ :-|:-
+FACE_FAR|人脸距离摄像头太远
+FACE_DIRECTION|超出人脸检测区域
+FACE_MOVEMENT|人脸晃动，需保持静止
+FACE_NONE|没有检测到人脸
+IMAGE_BRIGHT|光线过亮
+IMAGE_DARK|光线过暗
+LOW_FPS|帧率过低
 
 #### Q：光线不足
 除了客户端会对视频质量进行检测，云端也会对客户端传递过来的数据进行检测，如果云端返回`SNR`低，说明视频质量不高，则没有必要继续进行测量，客户端则停止测量
