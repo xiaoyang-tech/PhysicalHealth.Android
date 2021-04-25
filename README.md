@@ -304,16 +304,18 @@ bP_DIASTOLIC|float|舒张压|[90,100]||[50,60)U[80,90)|[70,80)|[60,70)
 ### 3.1 FAQ
 #### Q：测量异常中断
 
-停止原因|MeasureState
+MeasureState|停止原因
 :-|:-
-摄像头数据为空|NV21NULL
-用户主动中止，不想继续测量|STOP
-测量完成|Completed
-人脸引擎没有初始化|MNNNULL
+NV21NULL|摄像头数据为空
+STOP|用户主动中止，不想继续测量
+Completed|测量完成
+MNNNULL|人脸引擎没有初始化
 FRAMENOTGOOD|视频帧质量不佳
 
 关于视频质量不佳的具体原因会在`CollectorListener`接口的`onConstraintReceived`会返回客户端对视频帧检测的结果，如果视频帧符合要求则返回`Good`,如果不符合则返回`Error`,并给出错误原因,如:
- :-|:-
+
+Error|说明
+:-|:-
 FACE_FAR|人脸距离摄像头太远
 FACE_DIRECTION|超出人脸检测区域
 FACE_MOVEMENT|人脸晃动，需保持静止
