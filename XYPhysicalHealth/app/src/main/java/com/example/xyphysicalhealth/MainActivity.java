@@ -5,23 +5,17 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.Toast;
-
 import androidx.appcompat.app.AppCompatActivity;
-
 import com.luoye.bzmedia.BZMedia;
 import com.luoye.bzmedia.BuildConfig;
 import com.tencent.mmkv.MMKV;
-
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
-
 import java.io.File;
 import java.util.ArrayList;
-
-import cn.xymind.happycat.enums.CameraCheckResult;
 import cn.xymind.happycat.util.CameraCheckUtil;
+import cn.xymind.happycat.util.Constant;
 import cn.xymind.happycat.util.FileUtil;
 import cn.xymind.happycat.util.PermissionUtil;
 
@@ -44,24 +38,24 @@ public class MainActivity extends AppCompatActivity {
      * 检查设备是否支持
      */
     private void checkSupport(){
-        CameraCheckResult cameraCheckResult = CameraCheckUtil.isSupportSDK(this);
+        int cameraCheckResult = CameraCheckUtil.isSupportSDK(this);
         switch (cameraCheckResult){
-            case GOOD:
+            case Constant.CHECK_CAMERA.GOOD:
                 Log.e(TAG,"设备支持，可以测量");
                 break;
-            case NOT_SUPPORT_CAMERA2:
+            case Constant.CHECK_CAMERA.NOT_SUPPORT_CAMERA2:
                 Log.e(TAG,"设备不支持，VERSION.SDK_INT < 21，不支持Camera2");
                 break;
-            case MAX_PIXEL_LESS:
+            case Constant.CHECK_CAMERA.MAX_PIXEL_LESS:
                 Log.e(TAG,"设备不支持，相机最大像素小于200万");
                 break;
-            case ISO_ADJUSTABLE_RANGE_UNAVAILABLE:
+            case Constant.CHECK_CAMERA.ISO_ADJUSTABLE_RANGE_UNAVAILABLE:
                 Log.e(TAG,"设备不支持，相机不能调整ISO");
                 break;
-            case HARDWARE_LEVEL_LESS:
+            case Constant.CHECK_CAMERA.HARDWARE_LEVEL_LESS:
                 Log.e(TAG,"设备不支持，相机级别不够");
                 break;
-            case NOT_ENOUGH_FPS:
+            case Constant.CHECK_CAMERA.NOT_ENOUGH_FPS:
                 Log.e(TAG,"设备不支持，相机不满足最低30FPS");
                 break;
         }
@@ -69,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
     private void init(){
         MMKV.initialize(this);
         BZMedia.init(this, BuildConfig.DEBUG);
-        if (FileUtil.copyFileOrDir( STUDY_PATH, getApplication())) {
+        if (FileUtil.copyFileOrDir(STUDY_PATH, getApplication())) {
             studyPath = this.getFilesDir().getAbsolutePath() + File.separator +  STUDY_PATH;
             Log.e(TAG, studyPath);
         }

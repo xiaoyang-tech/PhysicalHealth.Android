@@ -16,20 +16,19 @@ import cn.xymind.happycat.callback.HttpResultListener;
 import cn.xymind.happycat.callback.MNNFaceDetectListener;
 import cn.xymind.happycat.callback.MeasureProcessListener;
 import cn.xymind.happycat.callback.RecordVideoListener;
-import cn.xymind.happycat.enums.MeasureState;
-import cn.xymind.happycat.enums.WebError;
+
 import cn.xymind.happycat.helper.PhysicalHealth;
 
 public class HealthMeasureActivity extends AppCompatActivity implements OnCameraStateListener,
         MeasureProcessListener, CollectorListener, MNNFaceDetectListener, CloudAnalyzerResultListener, RecordVideoListener, HttpResultListener {
 
     private String TAG= "HealthMeasureActivity";
-    private PhysicalHealth camera1Helper;
+    private PhysicalHealth physicalHealth;
     private BZCameraView bzCameraView;
     private int previewFormat = ImageFormat.NV21;
-    private String userName ="your userName";
-    private String password ="your password";
-    private String license="your license";
+    private String AppId ="your AppId";
+    private String SdkKey ="your SdkKey";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -46,12 +45,11 @@ public class HealthMeasureActivity extends AppCompatActivity implements OnCamera
     }
 
     private void initCamera(){
-        camera1Helper =  new PhysicalHealth.Builder()
-                .username(userName)
-                .password(password)
-                .license(license)
-                .studyPath(MainActivity.studyPath)
-                .recordVideo(true)//录制视频true
+        physicalHealth =  new PhysicalHealth.Builder()
+                .AppId(AppId)//必填
+                .SdkKey(SdkKey)//必填
+                .studyPath(MainActivity.studyPath)//必填
+                .recordVideo(false)//录制视频true,默认为false
                 .CloudAnalyzerResultListener(this)
                 .CollectorListener(this)
                 .MNNFaceDetectListener(this)
@@ -62,30 +60,29 @@ public class HealthMeasureActivity extends AppCompatActivity implements OnCamera
     }
 
     public void startMeasurement(View view) {
-        if (camera1Helper != null) {
-            camera1Helper.startMeasurement();
+        if (physicalHealth != null) {
+            physicalHealth.startMeasurement();
         }
     }
 
     public void stopMeasurement(View view) {
-        if (camera1Helper != null) {
-            camera1Helper.interruptMeasurement();
+        if (physicalHealth != null) {
+            physicalHealth.interruptMeasurement();
         }
     }
 
     //OnCameraStateListener
     @Override
     public void onPreviewSuccess(Camera camera, int width, int height) {
-
-        if (camera1Helper != null) {
-            camera1Helper.onPreviewSuccess();
+        if (physicalHealth != null) {
+            physicalHealth.onPreviewSuccess();
         }
     }
 
     @Override
     public void onPreviewDataUpdate(byte[] data, int width, int height, int displayOrientation, int cameraId) {
-        if (camera1Helper != null) {
-            camera1Helper.onPreviewDataUpdate(data,width,height,displayOrientation,cameraId,previewFormat);
+        if (physicalHealth != null) {
+            physicalHealth.onPreviewDataUpdate(data,width,height,displayOrientation,cameraId,previewFormat);
         }
     }
 
@@ -98,21 +95,17 @@ public class HealthMeasureActivity extends AppCompatActivity implements OnCamera
     //CloudAnalyzerResultListener
 
     @Override
-    public void onCloudAnalyzerResult(String s) {
-        Log.e(TAG,s);
+    public void onCloudAnalyzerResult(String result) {
+        Log.e(TAG,"onCloudAnalyzerResult "+result);
     }
 
-    @Override
-    public void onCloudAnalyzerError(WebError webError) {
-        Log.e(TAG,"错误码: "+webError.getErrorCode());
-    }
 
     //CollectorListener
     @Override
     public void onConstraintReceived(ConstraintResult constraintStatus) {
         if(constraintStatus.status !=ConstraintResult.ConstraintStatus.Good){
             Log.e(TAG,constraintStatus.toString());
-            //对视频帧的检测,不佳要停止UI
+            //对视频帧的检测,error要停止UI
         }
     }
     //MNNFaceDetectListener
@@ -127,15 +120,15 @@ public class HealthMeasureActivity extends AppCompatActivity implements OnCamera
         Log.e(TAG,"onMeasureFaceDetect");
         return null;
     }
-    @Override
-    public void onMeasureUpdate(String m){
 
-        Log.e(TAG,"onMeasureUpdate "+m);
-    }
     @Override
-    public void onMeasureStop(MeasureState measureState) {
-        //SDK停止测量 UI要停止
-        Log.e(TAG,"measureStop "+measureState);
+    public void onMeasureStop(String msg) {
+        Log.e(TAG,"onMeasureStop "+msg);
+    }
+
+    @Override
+    public void onMeasureStart() {
+        Log.e(TAG,"onMeasureStart");
     }
 
     //RecordVideoListener
@@ -169,20 +162,20 @@ public class HealthMeasureActivity extends AppCompatActivity implements OnCamera
 
     @Override
     protected void onDestroy() {
-        if (camera1Helper != null) {
-            camera1Helper.onDestroy();
-            camera1Helper = null;
+        if (physicalHealth != null) {
+            physicalHealth.onDestroy();
+            physicalHealth = null;
         }
         super.onDestroy();
     }
 
     @Override
     public void onHttpSuccess(int requestCode) {
-
+        Log.e(TAG,"onHttpSuccess"+requestCode);
     }
 
     @Override
     public void onHttpError(int requestCode, int responseCode, String body) {
-
+        Log.e(TAG,"onHttpError"+requestCode+" "+responseCode+" "+body);
     }
 }

@@ -8,9 +8,8 @@
 
 授权项|内容|备注
 :-|:-|:-
-用户名||
-密码||
-License||
+AppId||
+SdkKey||
 
 *以上内容需要联系管理员获取。*
 
@@ -103,15 +102,14 @@ application |Application| 用于获取assets目录
 
 #### 3) 登录、鉴权以及初始化对象
 
-创建一个`PhysicalHealth`对象,传入`userName`,`passWord`,`license`，`studyPath`进行初始化，是否录制视频以及回调可根据需要设置
+创建一个`PhysicalHealth`对象,传入`AppId`,`SdkKey`，`studyPath`进行初始化，是否录制视频以及回调可根据需要设置
 ```java
 private PhysicalHealth physicalHealth;
 physicalHealth =  new PhysicalHealth.Builder()
-                .username(userName)
-                .password(password)
-                .license(license)
-                .studyPath(MainActivity.studyPath)
-                .recordVideo(true)
+                .AppId(AppId)//必填
+                .SdkKey(SdkKey)//必填
+                .studyPath(MainActivity.studyPath)//必填
+                .recordVideo(false)
                 .CloudAnalyzerResultListener(this)
                 .CollectorListener(this)
                 .MNNFaceDetectListener(this)
@@ -123,9 +121,8 @@ physicalHealth =  new PhysicalHealth.Builder()
 
 参数名|类型|含义
 :-|:-|:-
-userName|String|用户名或手机号|
-passWord|String|密码|
-license|String|唯一标识|
+AppId|String| |
+SdkKey|String| |
 studyPath|String|模型文件地址
 recordVideo|boolean|是否录制视频
 
@@ -307,22 +304,28 @@ bP_DIASTOLIC|float|舒张压|[90,100]||[50,60)U[80,90)|[70,80)|[60,70)
 MeasureState|停止原因
 :-|:-
 NV21NULL|摄像头数据为空
-STOP|用户主动中止，不想继续测量
-Completed|测量完成
-MNNNULL|人脸引擎没有初始化
-FRAMENOTGOOD|视频帧质量不佳
+USER_STOP|用户主动中止，不想继续测量
+COMPLETED|测量完成
+MNN_NULL|人脸引擎没有初始化
+COLLECT_ERROR|收集器错误
+STUDY_FILE_ERROR|加载学习文件失败
 
 关于视频质量不佳的具体原因会在`CollectorListener`接口的`onConstraintReceived`会返回客户端对视频帧检测的结果，如果视频帧符合要求则返回`Good`,如果不符合则返回`Error`,并给出错误原因,如:
 
 Error|说明
 :-|:-
-FACE_FAR|人脸距离摄像头太远
-FACE_DIRECTION|超出人脸检测区域
-FACE_MOVEMENT|人脸晃动，需保持静止
-FACE_NONE|没有检测到人脸
-IMAGE_BRIGHT|光线过亮
-IMAGE_DARK|光线过暗
-LOW_FPS|帧率过低
+FACE_FAR|人脸过远
+FACE_DIRECTION|人脸方向不正
+FACE_MOVEMENT|人脸晃动
+FACE_NONE|人脸丢失
+FACE_OFFTARGET|人脸超出范围
+IMAGE_BRIGHT|画面过亮
+IMAGE_DARK|画面过暗
+IMAGE_QUALITY|画面质量不佳
+IMAGE_EMPTY|画面为空
+IMAGE_BACKLIT|画面背景过亮
+LOW_FPS|FPS低
+CAMERA_MOVEMENT|相机晃动
 
 #### Q：光线不足
 除了客户端会对视频质量进行检测，云端也会对客户端传递过来的数据进行检测，如果云端返回`SNR`低，说明视频质量不高，则没有必要继续进行测量，客户端则停止测量
