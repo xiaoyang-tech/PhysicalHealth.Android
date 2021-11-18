@@ -46,6 +46,7 @@ public class HealthMeasureActivity extends AppCompatActivity implements OnCamera
 
     private void initCamera(){
         physicalHealth =  new PhysicalHealth.Builder()
+                .activity(this)//必填
                 .AppId(AppId)//必填
                 .SdkKey(SdkKey)//必填
                 .studyPath(MainActivity.studyPath)//必填
