@@ -106,6 +106,7 @@ application |Application| 用于获取assets目录
 ```java
 private PhysicalHealth physicalHealth;
 physicalHealth =  new PhysicalHealth.Builder()
+                .activity(this)//必填
                 .AppId(AppId)//必填
                 .SdkKey(SdkKey)//必填
                 .studyPath(MainActivity.studyPath)//必填
@@ -187,10 +188,9 @@ public interface MeasureProcessListener {
     default FaceDetect onMeasureFaceDetect(){return null;}
 
     //测量结束或者中止
-    void onMeasureStop(MeasureState measureState );
+    void onMeasureStop(String measureState );
 
-    //测量过程中更新数据
-    default void onMeasureUpdate(String message){}
+    void onMeasureStart();
 
 }
  
@@ -214,14 +214,14 @@ public interface CloudAnalyzerResultListener {
      //开始分析数据
      default void onStartAnalyzing() {}
 
-     //每次分析结束
-     default void onEachFinishAnalyzing() {}
+    //每次分析结束
+    default void onEachFinishAnalyzing(int index, int heartRate) {}
 
      //获得返回结果
      default void onCloudAnalyzerResult(String result){}
 
      //服务端返回错误消息
-     default void onCloudAnalyzerError(WebError error){}
+     default void onCloudAnalyzerError(String error){}
 }
 
 ```
@@ -236,7 +236,7 @@ public interface CollectorListener {
     default void onChunkPayloadReceived(ChunkPayload chunkPayload,long chunkNumber){}
 
     //视频帧和耗时
-    default void onFrameRateEvent(double frameRate, Long frameTimestamp){}
+    default void onFrameRateEvent(double frameRate){}
 
 }
 ```
@@ -303,29 +303,33 @@ bP_DIASTOLIC|float|舒张压|[90,100]||[50,60)U[80,90)|[70,80)|[60,70)
 
 MeasureState|停止原因
 :-|:-
-NV21NULL|摄像头数据为空
-USER_STOP|用户主动中止，不想继续测量
-COMPLETED|测量完成
-MNN_NULL|人脸引擎没有初始化
-COLLECT_ERROR|收集器错误
-STUDY_FILE_ERROR|加载学习文件失败
+USER_STOP|用户主动中止
+COMPLETED|测量已完成
+MNN_NULL|人脸引擎初始化失败，请联系客服
+COLLECT_ERROR|数据采集异常，请联系客服
+STUDY_FILE_ERROR|加载学习文件失败，请联系客服
+UNKNOWN_ERROR|发生未知异常，请联系客服
+NO_FACE_ERROR|人脸丢失，请保持人脸在圆框区域，重新开始测量
+WEB_SOCKET_ERROR|测量服务网络连接异常断开，请保持网络畅通并稍后重试
+LAST_CHUNK_ERROR|测量服务网络请求不稳定，请保持网络畅通并稍后重试
+REQUEST_RESULT_ERROR|测量服务网络请求超时，请保持网络畅通并稍后重试
+LOW_SNR_ERROR|测量信号不满足测量条件，请确保环境光线明亮，脸部面对光源且光照均匀；不要化妆，保持面部无遮挡，测量过程中保持静止，重新开始测量
 
 关于视频质量不佳的具体原因会在`CollectorListener`接口的`onConstraintReceived`会返回客户端对视频帧检测的结果，如果视频帧符合要求则返回`Good`,如果不符合则返回`Error`,并给出错误原因,如:
 
 Error|说明
 :-|:-
-FACE_FAR|人脸过远
-FACE_DIRECTION|人脸方向不正
-FACE_MOVEMENT|人脸晃动
-FACE_NONE|人脸丢失
-FACE_OFFTARGET|人脸超出范围
-IMAGE_BRIGHT|画面过亮
-IMAGE_DARK|画面过暗
-IMAGE_QUALITY|画面质量不佳
-IMAGE_EMPTY|画面为空
-IMAGE_BACKLIT|画面背景过亮
+FACE_FAR|"人脸过远，请保持人脸与摄像头40-60cm距离
+FACE_DIRECTION|人脸方向不正，请保持人脸正对摄像头
+FACE_MOVEMENT|人脸发生晃动，请保持测量过程人脸静止
+FACE_NONE|人脸丢失，请保持人脸在圆框区域
+FACE_OFFTARGET|人脸超出范围，请保持人脸在圆框区域
+IMAGE_BRIGHT|画面过亮，请适当调低环境光线亮度
+IMAGE_DARK|画面过暗，请适当调高环境光线亮度
+IMAGE_QUALITY|画面质量不佳，请确保环境光线充足或更换其它设备测量
+IMAGE_BACKLIT|画面背景过亮，请适当调低背景光线亮度
 LOW_FPS|FPS低
-CAMERA_MOVEMENT|相机晃动
+
 
 #### Q：光线不足
 除了客户端会对视频质量进行检测，云端也会对客户端传递过来的数据进行检测，如果云端返回`SNR`低，说明视频质量不高，则没有必要继续进行测量，客户端则停止测量
